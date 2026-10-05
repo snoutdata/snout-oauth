@@ -1,11 +1,11 @@
-# snout_oauth's own cargo-deny policy: packages/stack/deny.toml, unchanged so far, for its own lockfile.
+# snout_oauth's own cargo-deny policy: the stack's shared deny.toml, unchanged so far, for its own lockfile.
 
 [graph]
 all-features = true
 
 # Every licence here is compatible with shipping the stack under Apache-2.0. A copyleft
 # licence (GPL, AGPL, LGPL, MPL, SSPL) or a source-available one (BSL, Elastic) fails the
-# check: a dependency must never dictate the stack's own licence (Q5).
+# check: a dependency must never dictate the stack's own licence.
 [licenses]
 allow = [
 	"MIT",

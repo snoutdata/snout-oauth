@@ -1,8 +1,8 @@
 //! Whether a bearer token may open the role a client asked for. Pure: no `unsafe`, no Postgres,
-//! tested with plain `#[test]`s and fuzzed (fuzz/). The C boundary (lib.rs) hands it the token,
+//! tested with plain `#[test]`s and fuzzed. The C boundary (lib.rs) hands it the token,
 //! the role, the settings, the key set and the time, and turns the answer into Postgres's.
 //!
-//! A database token (docs/cloud/DB-OAUTH.md O5-O9) is a compact JWS signed ES256 by the issuer's
+//! A database token is a compact JWS signed ES256 by the issuer's
 //! DATABASE key, which no HTTP service trusts, with these claims:
 //!
 //! - `iss`: exactly the configured issuer;
@@ -87,9 +87,9 @@ pub enum Reason {
 		lifetime: i64,
 		max: i64,
 	},
-	/// `role` without `db_role`: a session token (O9).
+	/// `role` without `db_role`: a session token.
 	SessionToken,
-	/// `role` beside `db_role`: a database token never carries `role` (O9).
+	/// `role` beside `db_role`: a database token never carries `role`.
 	RoleClaim,
 	NoDbRole,
 	WrongRole {
@@ -478,7 +478,7 @@ pub mod fixtures {
 		}
 	}
 
-	/// The claims a Phase 2 issuer puts in a database token.
+	/// The claims the issuer puts in a database token.
 	pub fn claims() -> Value {
 		json!({ "iss": ISSUER, "aud": AUD, "sub": "user-0001", "token_use": "db", "db_role": "alice",
 			"iat": NOW - 10, "exp": NOW + 3600 })
@@ -958,7 +958,7 @@ mod tests {
 		assert!(long.len() < 120, "{long}");
 	}
 
-	/// The per-login cost of the check itself, for X9 (docs/cloud/DB-OAUTH.md, Phase 1). Run:
+	/// The per-login cost of the check itself. Run:
 	/// `cargo test --release --lib token::tests::bench -- --ignored --nocapture`.
 	#[test]
 	#[ignore]

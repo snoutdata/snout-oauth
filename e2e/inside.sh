@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs INSIDE the e2e box (run.sh starts it). Builds snout_oauth with the shipping recipe
 # (scripts/build-dist.sh), starts a Postgres 18 with it, drives every case through psql 18's real
-# device flow, and measures a login (X9). Exits non-zero if any case fails.
+# device flow, and measures what a login costs. Exits non-zero if any case fails.
 set -uo pipefail
 ISSUER="$1"
 AUD=e2eprojref1
@@ -20,7 +20,7 @@ CARGO_TARGET_DIR=/cache/target bash /src/scripts/build-dist.sh build 18 /out >/t
 install -m 0755 /out/lib/snout_oauth.so "$(pg_config --pkglibdir)/snout_oauth.so"
 echo "snout_oauth.so: $(stat -c %s /out/lib/snout_oauth.so) bytes, stripped"
 
-# The key file, installed the way the host agent will (O6): fetched, then renamed into place.
+# The key file, installed the way the platform does: fetched, then renamed into place.
 install -d -m 0755 /var/lib/snout_oauth
 publish() {
 	curl -sf "$ISSUER/jwks?kids=$1" >/var/lib/snout_oauth/.jwks.tmp && mv -f /var/lib/snout_oauth/.jwks.tmp "$KEYS"
@@ -159,7 +159,7 @@ echo "=== no token ever reached the server log"
 tokens="$(grep -c 'eyJ' $LOG)"
 verdict "base64url JSON in the log" "$tokens" "0" "a JWT header always starts eyJ"
 
-# X9: what a login costs the server. log_connections = 'all' includes Postgres 18's setup
+# What a login costs the server. log_connections = 'all' includes Postgres 18's setup
 # durations, and its "authentication" figure is the time from the start of authentication to its
 # end inside the backend: for OAuth that is loading the validator (unless preloaded), the SASL
 # exchange and the check; for a password, the SCRAM exchange.

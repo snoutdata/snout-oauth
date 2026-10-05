@@ -1,19 +1,18 @@
 // A THROWAWAY OAuth issuer for snout_oauth's end-to-end run (e2e/run.sh). Node 22, no
-// dependencies. Never deployed, never reachable from outside this machine. Adapted from the Phase 0
-// spike (packages/snoutpod/spikes/db-oauth/issuer.mjs), which stays as it was run.
+// dependencies. Never deployed, never reachable from outside this machine.
 //
 // It speaks just enough OAuth for libpq 18's device flow: discovery, a device authorization
 // endpoint (RFC 8628), and a token endpoint that approves a device code on its first poll. Tokens
-// are ES256 DATABASE tokens shaped as docs/cloud/DB-OAUTH.md O9 says the real issuer's are:
+// are ES256 DATABASE tokens shaped as the real issuer's are:
 // `token_use: "db"`, the role in `db_role` (never `role`), and `aud` the project ref, which it reads
-// from the `db:<ref>` scope the SERVER asked for (O10), as the real issuer will.
+// from the `db:<ref>` scope the SERVER asked for, as the real issuer does.
 //
 // Control endpoints, for the harness only:
 //   GET /mode?next=<mode>&sign=<kid>   what the next token is, and which key signs it
 //     modes: ok expired otheraud otherrole otherkey unknownkid otherissuer notokenuse session
 //            rolebeside
 //   GET /jwks?kids=k1,k2               a key file holding those public keys (the harness installs
-//                                      it in the database the way the host agent will, O6)
+//                                      it in the database the way the platform does)
 //   GET /seen                          the client ids and scopes device authorization received
 //
 //   ISSUER=http://host.docker.internal:9998 PORT=9998 ROLE=alice node issuer.mjs
@@ -145,7 +144,7 @@ createServer(async (req, res) => {
 		devices.delete(code);
 		const token = mint(scope);
 		if (!token) {
-			// O10: the issuer refuses when the server's scope names no project.
+			// The issuer refuses when the server's scope names no project.
 			return json(res, 400, { error: 'invalid_scope', error_description: 'the scope names no db:<ref>' });
 		}
 		return json(res, 200, { access_token: token, token_type: 'Bearer', expires_in: 3600 });
