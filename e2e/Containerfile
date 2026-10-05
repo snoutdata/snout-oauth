@@ -1,0 +1,13 @@
+# The end-to-end box (e2e/run.sh): the real SnoutData Cloud :18 pod image, plus what build-dist.sh's
+# `tools` step installs to build the validator against its headers, plus libpq-oauth, the package
+# that gives psql 18 its OAuth device flow. Nothing here goes into the pod image (that is Phase 3).
+FROM ghcr.io/snoutdata/snoutpod-postgres:18
+USER root
+ENV RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo PATH=/opt/cargo/bin:/usr/lib/postgresql/18/bin:$PATH
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates libpq-oauth \
+	&& rm -rf /var/lib/apt/lists/*
+RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.1
+COPY Cargo.toml /src/Cargo.toml
+COPY scripts/build-dist.sh /src/scripts/build-dist.sh
+RUN bash /src/scripts/build-dist.sh tools 18
+ENTRYPOINT []

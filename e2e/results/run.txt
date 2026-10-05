@@ -1,0 +1,65 @@
+=== versions
+postgres (PostgreSQL) 18.6 (Debian 18.6-1.pgdg12+2)
+psql (PostgreSQL) 18.6 (Debian 18.6-1.pgdg12+2)
+libpq-oauth:arm64 18.6-1.pgdg12+2
+libpq5:arm64 18.6-1.pgdg12+2
+=== build with scripts/build-dist.sh
+snout_oauth.so: 725760 bytes, stripped
+=== a Postgres 18, started WITHOUT OAuth
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+=== OAuth switched on with a reload, no restart
+oauth_validator_libraries=snout_oauth (sighup)
+=== cases
+PASS  oauth  a database token (user=alice): admitted  (alice as oauth:user-0001)
+PASS  oauth  expired (user=alice): refused  (snout_oauth: refused a sign-in as role "alice" (identity "user-0001"): the token expired 120 s ago)
+PASS  oauth  another project's aud (user=alice): refused  (snout_oauth: refused a sign-in as role "alice" (identity "user-0001"): the token is not for this project (aud))
+PASS  oauth  a token naming another role (user=alice): refused  (snout_oauth: refused a sign-in as role "alice" (identity "user-0001"): the token is for role "bob", and the client asked for "alice")
+PASS  oauth  signed by an unpublished key under a published kid (user=alice): refused  (snout_oauth: refused a sign-in as role "alice": the signature does not verify)
+PASS  oauth  an unknown kid (user=alice): refused  (snout_oauth: refused a sign-in as role "alice": no key "k9" in the key file)
+PASS  oauth  another issuer (user=alice): refused  (snout_oauth: refused a sign-in as role "alice": the token was issued by "http://evil.example", not the configured issuer)
+PASS  oauth  no token_use (user=alice): refused  (snout_oauth: refused a sign-in as role "alice" (identity "user-0001"): the token has no token_use, so it is not a database token)
+PASS  oauth  session-shaped: role, no db_role (user=alice): refused  (snout_oauth: refused a sign-in as role "alice" (identity "user-0001"): the token has role but no db_role: a session token, not a database token)
+PASS  oauth  role beside db_role (user=alice): refused  (snout_oauth: refused a sign-in as role "alice" (identity "user-0001"): the token has role beside db_role; a database token never carries role)
+PASS  oauth  alice's token presented by bob (user=bob): refused  (snout_oauth: refused a sign-in as role "bob" (identity "user-0001"): the token is for role "alice", and the client asked for "bob")
+=== rotation, the server running throughout
+PASS  oauth  k2 published beside k1, signed by k2 (user=alice): admitted  (alice as oauth:user-0001)
+PASS  oauth  k1 still accepted during the overlap (user=alice): admitted  (alice as oauth:user-0001)
+PASS  oauth  k1 removed from the file, signed by k1 (user=alice): refused  (snout_oauth: refused a sign-in as role "alice": no key "k1" in the key file)
+PASS  oauth  k2 alone (user=alice): admitted  (alice as oauth:user-0001)
+=== the key file missing or broken
+PASS  oauth  key file missing (user=alice): refused  (snout_oauth: refused a sign-in as role "alice": no keys to check it with: the key file "/var/lib/snout_oauth/jwks.json" cannot be opened (No such file or directory (os error 2)))
+PASS  oauth  key file not JSON (user=alice): refused  (snout_oauth: refused a sign-in as role "alice": no keys to check it with: the key file "/var/lib/snout_oauth/jwks.json" is not a JWKS document (expected ident at line 1 column 14))
+PASS  oauth  key file restored (user=alice): admitted  (alice as oauth:user-0001)
+=== passwords (O8)
+PASS  passwd user=carol: admitted  (carol)
+PASS  passwd user=bob: refused  (psql: error: connection to server at "127.0.0.1", port 5432 failed: server requires OAuth authentication, but oauth_issuer and oauth_client_id are not both set)
+PASS  passwd user=alice: refused  (psql: error: connection to server at "127.0.0.1", port 5432 failed: server requires OAuth authentication, but oauth_issuer and oauth_client_id are not both set)
+=== the same postmaster throughout (no restart since it started without OAuth)
+PASS  pg_postmaster_start_time: 2026-10-04 07:58:06.092684+00  (unchanged)
+=== the server's scope reached the issuer (O10)
+PASS  device authorization scope: "scope":"openid db:e2eprojref1"   (every device request carried the pod's scope)
+=== no token ever reached the server log
+PASS  base64url JSON in the log: 0  (a JWT header always starts eyJ)
+=== X9: a login, measured (30 each)
+x9  oauth, validator loaded at the first login (oauth_validator_libraries only): server authentication median 0.338 ms, p90 0.376 ms over 30 logins; psql wall median 7.000 ms (device flow included)
+x9  scram-sha-256, same server: server authentication median 3.388 ms, p90 3.438 ms over 30 logins; psql wall median 7.000 ms
+x9  oauth, validator preloaded (shared_preload_libraries too): server authentication median 0.199 ms, p90 0.279 ms over 30 logins; psql wall median 7.000 ms (device flow included)
+x9  scram-sha-256, same server: server authentication median 3.397 ms, p90 3.510 ms over 30 logins; psql wall median 7.000 ms
+=== what the server logged
+  91 'OAuth bearer authentication failed' FATALs, 72 'connection authenticated ... method=oauth' lines
+  the validator's own lines, one per refusal:
+    snout_oauth: refused a sign-in as role "alice" (identity "user-0001"): the token expired N s ago
+    snout_oauth: refused a sign-in as role "alice" (identity "user-0001"): the token is not for this project (aud)
+    snout_oauth: refused a sign-in as role "alice" (identity "user-0001"): the token is for role "bob", and the client asked for "alice"
+    snout_oauth: refused a sign-in as role "alice": the signature does not verify
+    snout_oauth: refused a sign-in as role "alice": no key "k9" in the key file
+    snout_oauth: refused a sign-in as role "alice": the token was issued by "http://evil.example", not the configured issuer
+    snout_oauth: refused a sign-in as role "alice" (identity "user-0001"): the token has no token_use, so it is not a database token
+    snout_oauth: refused a sign-in as role "alice" (identity "user-0001"): the token has role but no db_role: a session token, not a database token
+    snout_oauth: refused a sign-in as role "alice" (identity "user-0001"): the token has role beside db_role; a database token never carries role
+    snout_oauth: refused a sign-in as role "bob" (identity "user-0001"): the token is for role "alice", and the client asked for "bob"
+    snout_oauth: refused a sign-in as role "alice": no key "k1" in the key file
+    snout_oauth: refused a sign-in as role "alice": no keys to check it with: the key file "/var/lib/snout_oauth/jwks.json" cannot be opened (No such file or directory (os error 2))
+    snout_oauth: refused a sign-in as role "alice": no keys to check it with: the key file "/var/lib/snout_oauth/jwks.json" is not a JWKS document (expected ident at line 1 column 14)
+=== 0 failed

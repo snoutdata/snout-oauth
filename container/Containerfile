@@ -1,0 +1,39 @@
+# snout_oauth's build and test environment: Rust, cargo-pgrx and a pgrx-managed Postgres 18 built
+# with assertions on, so a broken invariant fails a test instead of passing quietly. Everything runs
+# as the unprivileged `dev` user because Postgres refuses to start as root.
+#
+# Postgres 18 only: the OAuth validator interface (libpq/oauth.h) is new in 18, so there is nothing
+# to build against on 17. Its own image rather than the stack's (container/Containerfile): a Postgres
+# extension needs the server's headers, libclang for bindgen and a Postgres to test against, none of
+# which the servers need. Versions are pinned, and cargo-pgrx must match the pgrx in Cargo.toml
+# exactly.
+FROM docker.io/library/rust:1.98.1-bookworm
+
+ARG PGRX_VERSION=0.19.2
+ARG CARGO_DENY_VERSION=0.20.2
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+		build-essential clang libclang-dev pkg-config bison flex \
+		libreadline-dev zlib1g-dev libssl-dev libxml2-dev libxslt1-dev libicu-dev \
+		ca-certificates git sudo \
+	&& rm -rf /var/lib/apt/lists/*
+
+RUN useradd --create-home --uid 1000 dev \
+	&& mkdir -p /cache/target \
+	&& chown -R dev:dev /cache /usr/local/cargo /usr/local/rustup
+
+USER dev
+ENV CARGO_TARGET_DIR=/cache/target
+
+RUN cargo install --locked cargo-pgrx --version "${PGRX_VERSION}" \
+	&& cargo install --locked cargo-deny --version "${CARGO_DENY_VERSION}"
+
+# Downloads and compiles Postgres 18 into ~/.pgrx with --enable-cassert.
+RUN cargo pgrx init --pg18 download
+
+RUN rustup component add clippy rustfmt
+
+WORKDIR /work
+
+# pgrx's test framework reads USER to decide who owns the test cluster.
+ENV USER=dev
