@@ -1,4 +1,4 @@
-//! snout_oauth: a Postgres 18 OAuth validator (docs/cloud/DB-OAUTH.md, Phase 1).
+//! snout_oauth: a Postgres 18 OAuth validator.
 //!
 //! A `pg_hba` line with method `oauth` makes the client fetch a bearer token from an issuer and
 //! present it; Postgres hands the token and the role asked for to the library named in

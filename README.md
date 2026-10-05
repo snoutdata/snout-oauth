@@ -214,8 +214,8 @@ bash scripts/build-dist.sh tools 18 && bash scripts/build-dist.sh build 18 /out 
 The token check and the key file parser (`src/token.rs`, `src/keys.rs`) are pure Rust that forbids
 `unsafe` and never touches Postgres; `src/lib.rs` is the C boundary (the validator ABI from
 `libpq/oauth.h`, declared by hand since pgrx does not bind it, with every call into Rust inside
-`catch_unwind`), and `src/settings.rs` the settings. Both pure modules are fuzzed by the stack's
-`oauth_token` target (`packages/stack/fuzz`).
+`catch_unwind`), and `src/settings.rs` the settings. Both pure modules are fuzzed (a libFuzzer
+target feeds arbitrary bytes to the token and key file parsers).
 
 `e2e/run.sh` builds the library with `build-dist.sh` inside the SnoutData Cloud Postgres 18 image,
 starts a throwaway issuer (`e2e/issuer.mjs`, Node, no dependencies), and signs in with psql 18 through

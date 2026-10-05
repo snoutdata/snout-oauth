@@ -1,6 +1,6 @@
-//! The issuer's public keys, read from a JWKS file the platform writes (DB-OAUTH.md O6: the
+//! The issuer's public keys, read from a JWKS file the platform writes (the
 //! validator never makes a network call). Pure: no `unsafe`, no Postgres, tested with plain
-//! `#[test]`s and fuzzed (fuzz/). It reads the file with `std::fs` and nothing else.
+//! `#[test]`s and fuzzed. It reads the file with `std::fs` and nothing else.
 //!
 //! A file holds several keys by `kid`, so an issuer rotates by publishing the new key beside the
 //! old one, signing with the new one, and removing the old one once every token it signed has
@@ -43,7 +43,7 @@ impl KeySet {
 	/// A JWKS document (`{"keys": [...]}`). Entries that are not EC P-256 signing keys for ES256
 	/// (another `kty`, `crv`, `alg` or `use`, or no `kid`) are skipped and counted. The whole file
 	/// is refused when it is not that shape, when an EC P-256 entry's coordinates are not 32 bytes
-	/// each, when any entry carries a PRIVATE key (`d`: the pod must hold public keys only, O5), or
+	/// each, when any entry carries a PRIVATE key (`d`: the pod must hold public keys only), or
 	/// when nothing usable is left.
 	pub fn parse(text: &str) -> Result<KeySet, String> {
 		#[derive(Deserialize)]

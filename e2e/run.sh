@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# snout_oauth end to end on this machine (docs/cloud/DB-OAUTH.md, Phase 1): psql 18 signs in to a
+# snout_oauth end to end on this machine: psql 18 signs in to a
 # Postgres 18 (our real :18 pod image) through the OAuth device flow, against a throwaway issuer,
 # and snout_oauth, built with scripts/build-dist.sh, decides. Nothing live is touched.
 #
 #   bash e2e/run.sh                   # writes e2e/results/run.txt; exits non-zero on any failure
-#   E2E_LOGINS=60 bash e2e/run.sh     # more logins for the X9 measurement
+#   E2E_LOGINS=60 bash e2e/run.sh     # more logins for the login-cost measurement
 #
 # Needs Docker (or STACK_ENGINE=podman) and Node 22 on the host.
 set -euo pipefail
