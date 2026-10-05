@@ -1,0 +1,60 @@
+# Its own workspace, not a member of packages/stack's (whose Cargo.toml excludes it): a Postgres
+# extension is built with pgrx against a Postgres's headers, in its own container
+# (container/Containerfile), and pgrx pins its own dependency tree exactly. Its own lockfile, the
+# same toolchain.
+#
+# Postgres 18 only: the OAuth validator interface it implements (libpq/oauth.h) first shipped in 18.
+[workspace]
+
+[package]
+name = "snout_oauth"
+description = "snout_oauth: a Postgres 18 OAuth validator that checks signed database tokens against a key file."
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/snoutdata/snout-oauth"
+rust-version = "1.98.1"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+default = ["pg18"]
+pg18 = ["pgrx/pg18", "pgrx-tests/pg18"]
+pg_test = []
+
+[dependencies]
+# Pinned exactly, with cargo-pgrx in container/Containerfile: the two must match.
+pgrx = "=0.19.2"
+# ES256 verification, as snout-auth verifies other issuers' tokens (auth/src/oidc.rs).
+ring = "0.17"
+base64 = "0.22"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+pgrx-tests = "=0.19.2"
+
+[lints.rust]
+# X13: `unsafe` is denied everywhere except the Postgres boundary. This crate IS that boundary (the
+# validator's C entry point, its callbacks and the settings), so it is allowed here and confined:
+# the pure logic (token.rs, keys.rs) forbids it in its own module.
+unsafe_code = "allow"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(pgrx_embed)'] }
+
+[lints.clippy]
+dbg_macro = "deny"
+todo = "deny"
+unimplemented = "deny"
+
+# pgrx turns a Postgres ERROR into a Rust panic and back again, so a panic must unwind.
+[profile.dev]
+panic = "unwind"
+
+[profile.release]
+panic = "unwind"
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+# Not stripped here: scripts/build-dist.sh strips the shipped copy and keeps the symbols apart.

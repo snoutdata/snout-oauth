@@ -1,0 +1,9 @@
+# Only for pgrx's build and test tooling. snout_oauth is an OAuth validator library with no SQL
+# objects: Postgres loads it through oauth_validator_libraries, the pod image ships its .so and never
+# this file, so it is not in pg_available_extensions.
+comment = 'snout_oauth: OAuth validator for signed database tokens'
+default_version = '@CARGO_VERSION@'
+module_pathname = 'snout_oauth'
+relocatable = false
+superuser = true
+trusted = false
