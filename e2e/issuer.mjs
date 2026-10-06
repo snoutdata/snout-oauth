@@ -68,7 +68,7 @@ function mint(scope) {
 		claims.role = ROLE;
 	}
 	if (mode === 'rolebeside') {
-		claims.role = 'snout_member';
+		claims.role = 'authenticated';
 	}
 	const signer = mode === 'otherkey' ? stranger : mode === 'unknownkid' ? keys.k9 : keys[signWith];
 	const header = { alg: 'ES256', typ: 'JWT', kid: signer.kid };

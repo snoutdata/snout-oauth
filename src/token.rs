@@ -784,8 +784,8 @@ mod tests {
 	#[test]
 	fn a_session_token_is_never_a_database_token() {
 		let s = Signer::new("k1");
-		// What snout-auth's session tokens look like (src/jwt.rs): role, aud "snout_member".
-		let session = json!({ "iss": ISSUER, "aud": "snout_member", "sub": "user-0001", "role": "snout_member",
+		// What snout-auth's session tokens look like (src/jwt.rs): role, aud "authenticated".
+		let session = json!({ "iss": ISSUER, "aud": "authenticated", "sub": "user-0001", "role": "authenticated",
 			"exp": NOW + 3600, "iat": NOW });
 		assert_eq!(reason(run(&s, &session)), Reason::TokenUse(None));
 		// Even dressed with token_use and this project's aud, `role` without `db_role` is refused.
