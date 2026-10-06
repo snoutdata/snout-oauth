@@ -31,17 +31,17 @@ PASS  oauth  k2 alone (user=alice): admitted  (alice as oauth:user-0001)
 PASS  oauth  key file missing (user=alice): refused  (snout_oauth: refused a sign-in as role "alice": no keys to check it with: the key file "/var/lib/snout_oauth/jwks.json" cannot be opened (No such file or directory (os error 2)))
 PASS  oauth  key file not JSON (user=alice): refused  (snout_oauth: refused a sign-in as role "alice": no keys to check it with: the key file "/var/lib/snout_oauth/jwks.json" is not a JWKS document (expected ident at line 1 column 14))
 PASS  oauth  key file restored (user=alice): admitted  (alice as oauth:user-0001)
-=== passwords (O8)
+=== passwords
 PASS  passwd user=carol: admitted  (carol)
 PASS  passwd user=bob: refused  (psql: error: connection to server at "127.0.0.1", port 5432 failed: server requires OAuth authentication, but oauth_issuer and oauth_client_id are not both set)
 PASS  passwd user=alice: refused  (psql: error: connection to server at "127.0.0.1", port 5432 failed: server requires OAuth authentication, but oauth_issuer and oauth_client_id are not both set)
 === the same postmaster throughout (no restart since it started without OAuth)
 PASS  pg_postmaster_start_time: 2026-10-04 07:58:06.092684+00  (unchanged)
-=== the server's scope reached the issuer (O10)
+=== the server's scope reached the issuer
 PASS  device authorization scope: "scope":"openid db:e2eprojref1"   (every device request carried the pod's scope)
 === no token ever reached the server log
 PASS  base64url JSON in the log: 0  (a JWT header always starts eyJ)
-=== X9: a login, measured (30 each)
+=== a login, measured (30 each)
 x9  oauth, validator loaded at the first login (oauth_validator_libraries only): server authentication median 0.338 ms, p90 0.376 ms over 30 logins; psql wall median 7.000 ms (device flow included)
 x9  scram-sha-256, same server: server authentication median 3.388 ms, p90 3.438 ms over 30 logins; psql wall median 7.000 ms
 x9  oauth, validator preloaded (shared_preload_libraries too): server authentication median 0.199 ms, p90 0.279 ms over 30 logins; psql wall median 7.000 ms (device flow included)

@@ -143,7 +143,7 @@ oauth "key file not JSON" ok k2 alice refused "not a JWKS document"
 publish k2
 oauth "key file restored" ok k2 alice admitted
 
-echo "=== passwords (O8)"
+echo "=== passwords"
 password carol carol-pw admitted
 password bob bob-pw refused
 password alice '' refused
@@ -151,7 +151,7 @@ password alice '' refused
 echo "=== the same postmaster throughout (no restart since it started without OAuth)"
 verdict "pg_postmaster_start_time" "$(su postgres -c "psql -X -At -c 'select pg_postmaster_start_time()'")" "$started" "unchanged"
 
-echo "=== the server's scope reached the issuer (O10)"
+echo "=== the server's scope reached the issuer"
 scope="$(curl -sf "$ISSUER/seen" | grep -o '"scope":"[^"]*"' | sort -u | tr '\n' ' ')"
 verdict "device authorization scope" "$scope" "\"scope\":\"openid db:$AUD\" " "every device request carried the pod's scope"
 
@@ -198,7 +198,7 @@ measure() {
 	echo "x9  scram-sha-256, same server: server authentication median $(echo "$a" | median) ms, p90 $(echo "$a" | p90) ms over $(echo "$a" | grep -c .) logins; psql wall median $(printf '%s\n' "${w[@]}" | walls) ms"
 }
 
-echo "=== X9: a login, measured ($N each)"
+echo "=== a login, measured ($N each)"
 measure "validator loaded at the first login (oauth_validator_libraries only)"
 stop
 echo "shared_preload_libraries = 'snout_oauth'" >>/tmp/pg/postgresql.conf
